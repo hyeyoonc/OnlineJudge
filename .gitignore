@@ -80,3 +80,4 @@ venv/
 #test docker-compose
 docker-compose.yml
 .venv
+pgdata/

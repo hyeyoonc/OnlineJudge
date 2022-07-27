@@ -33,7 +33,7 @@ VENDOR_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "django_dramatiq",
+    # "django_dramatiq",
     "django_dbconn_retry",
 ]
 
@@ -210,7 +210,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
 CELERY_RESULT_BACKEND = f"{REDIS_URL}/2"
-BROKER_URL = f"{REDIS_URL}/3"
+CELERY_BROKER_URL = f"{REDIS_URL}/3"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 IP_HEADER = "HTTP_X_REAL_IP"
