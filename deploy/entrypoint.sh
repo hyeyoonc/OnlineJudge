@@ -2,6 +2,7 @@
 
 APP=/app
 DATA=/data
+JUDGE_SERVER_TOKEN = "CHANGE_THIS"
 
 mkdir -p $DATA/log $DATA/config $DATA/ssl $DATA/test_case $DATA/public/upload $DATA/public/avatar $DATA/public/website /var/log/celery
 

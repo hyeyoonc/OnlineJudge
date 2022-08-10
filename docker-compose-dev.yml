@@ -5,6 +5,8 @@ services:
       - "8003:8001"
     depends_on:
       - db
+    volumes:
+      - ./:/app/
   db:
     image: postgres:11
     ports:
