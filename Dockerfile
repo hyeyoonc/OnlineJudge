@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
     pip install --no-cache-dir -r /app/deploy/requirements.txt
 RUN         cp -f deploy/nginx/nginx.conf     /etc/nginx/nginx.conf &&\
     cp -f deploy/supervisord.conf  /etc/supervisor/conf.d/
-
+RUN         echo -e "\n" > /app/data/config/secret.key
 # front 쪽
 # RUN curl -L  $(curl -s  https://api.github.com/repos/QingdaoU/OnlineJudgeFE/releases/latest | grep /dist.zip | cut -d '"' -f 4) -o dist.zip && \
 #     unzip dist.zip && \
