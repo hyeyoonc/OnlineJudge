@@ -31,9 +31,12 @@ int main() {
     },
     "run": {
         "command": "{exe_path}",
-        "seccomp_rule": {ProblemIOMode.standard: "c_cpp", ProblemIOMode.file: "c_cpp_file_io"},
-        "env": default_env
-    }
+        "seccomp_rule": {
+            ProblemIOMode.standard: "c_cpp",
+            ProblemIOMode.file: "c_cpp_file_io",
+        },
+        "env": default_env,
+    },
 }
 
 _c_lang_spj_compile = {
@@ -42,13 +45,13 @@ _c_lang_spj_compile = {
     "max_cpu_time": 3000,
     "max_real_time": 10000,
     "max_memory": 1024 * 1024 * 1024,
-    "compile_command": "/usr/bin/gcc -DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c11 {src_path} -lm -o {exe_path}"
+    "compile_command": "/usr/bin/gcc -DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c11 {src_path} -lm -o {exe_path}",
 }
 
 _c_lang_spj_config = {
     "exe_name": "spj-{spj_version}",
     "command": "{exe_path} {in_file_path} {user_out_file_path}",
-    "seccomp_rule": "c_cpp"
+    "seccomp_rule": "c_cpp",
 }
 
 _cpp_lang_config = {
@@ -79,9 +82,12 @@ int main() {
     },
     "run": {
         "command": "{exe_path}",
-        "seccomp_rule": {ProblemIOMode.standard: "c_cpp", ProblemIOMode.file: "c_cpp_file_io"},
-        "env": default_env
-    }
+        "seccomp_rule": {
+            ProblemIOMode.standard: "c_cpp",
+            ProblemIOMode.file: "c_cpp_file_io",
+        },
+        "env": default_env,
+    },
 }
 
 _cpp_lang_spj_compile = {
@@ -90,13 +96,13 @@ _cpp_lang_spj_compile = {
     "max_cpu_time": 10000,
     "max_real_time": 20000,
     "max_memory": 1024 * 1024 * 1024,
-    "compile_command": "/usr/bin/g++ -DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c++14 {src_path} -lm -o {exe_path}"
+    "compile_command": "/usr/bin/g++ -DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c++14 {src_path} -lm -o {exe_path}",
 }
 
 _cpp_lang_spj_config = {
     "exe_name": "spj-{spj_version}",
     "command": "{exe_path} {in_file_path} {user_out_file_path}",
-    "seccomp_rule": "c_cpp"
+    "seccomp_rule": "c_cpp",
 }
 
 _java_lang_config = {
@@ -114,15 +120,15 @@ _java_lang_config = {
         "max_cpu_time": 5000,
         "max_real_time": 10000,
         "max_memory": -1,
-        "compile_command": "/usr/bin/javac {src_path} -d {exe_dir} -encoding UTF8"
+        "compile_command": "/usr/bin/javac {src_path} -d {exe_dir} -encoding UTF8",
     },
     "run": {
         "command": "/usr/bin/java -cp {exe_dir} -XX:MaxRAM={max_memory}k -Djava.security.manager -Dfile.encoding=UTF-8 "
-                   "-Djava.security.policy==/etc/java_policy -Djava.awt.headless=true Main",
+        "-Djava.security.policy==/etc/java_policy -Djava.awt.headless=true Main",
         "seccomp_rule": None,
         "env": default_env,
-        "memory_limit_check_only": 1
-    }
+        "memory_limit_check_only": 1,
+    },
 }
 
 
@@ -146,8 +152,8 @@ _py2_lang_config = {
     "run": {
         "command": "/usr/bin/python {exe_path}",
         "seccomp_rule": "general",
-        "env": default_env
-    }
+        "env": default_env,
+    },
 }
 _py3_lang_config = {
     "template": """//PREPEND BEGIN
@@ -169,8 +175,8 @@ _py3_lang_config = {
     "run": {
         "command": "/usr/bin/python3 {exe_path}",
         "seccomp_rule": "general",
-        "env": default_env + ["PYTHONIOENCODING=utf-8"]
-    }
+        "env": default_env + ["PYTHONIOENCODING=utf-8"],
+    },
 }
 
 _go_lang_config = {
@@ -189,15 +195,15 @@ _go_lang_config = {
         "max_real_time": 5000,
         "max_memory": 1024 * 1024 * 1024,
         "compile_command": "/usr/bin/go build -o {exe_path} {src_path}",
-        "env": ["GOCACHE=/tmp", "GOPATH=/tmp", "GOMAXPROCS=1"] + default_env
+        "env": ["GOCACHE=/tmp", "GOPATH=/tmp", "GOMAXPROCS=1"] + default_env,
     },
     "run": {
         "command": "{exe_path}",
         "seccomp_rule": "golang",
         # 降低内存占用
         "env": ["GODEBUG=madvdontneed=1", "GOMAXPROCS=1"] + default_env,
-        "memory_limit_check_only": 1
-    }
+        "memory_limit_check_only": 1,
+    },
 }
 
 _node_lang_config = {
@@ -216,25 +222,64 @@ _node_lang_config = {
         "max_real_time": 5000,
         "max_memory": 1024 * 1024 * 1024,
         "compile_command": "/usr/bin/node --check {src_path}",
-        "env": default_env
+        "env": default_env,
     },
     "run": {
         "command": "/usr/bin/node {exe_path}",
         "seccomp_rule": "node",
         # 降低内存占用
         "env": default_env,
-        "memory_limit_check_only": 1
-    }
+        "memory_limit_check_only": 1,
+    },
 }
 
 languages = [
-    {"config": _c_lang_config, "spj": {"compile": _c_lang_spj_compile, "config": _c_lang_spj_config},
-     "name": "C", "description": "GCC 9.4", "content_type": "text/x-csrc"},
-    {"config": _cpp_lang_config, "spj": {"compile": _cpp_lang_spj_compile, "config": _cpp_lang_spj_config},
-     "name": "C++", "description": "G++ 9.4", "content_type": "text/x-c++src"},
-    {"config": _java_lang_config, "name": "Java", "description": "OpenJDK 11", "content_type": "text/x-java"},
-    {"config": _py2_lang_config, "name": "Python2", "description": "Python 2.7", "content_type": "text/x-python"},
-    {"config": _py3_lang_config, "name": "Python3", "description": "Python 3.6", "content_type": "text/x-python"},
-    {"config": _go_lang_config, "name": "Golang", "description": "Golang 1.17", "content_type": "text/x-go"},
-    {"config": _node_lang_config, "name": "JavaScript", "description": "Node 14", "content_type": "text/javascript"},
+    {
+        "config": _c_lang_config,
+        "spj": {"compile": _c_lang_spj_compile, "config": _c_lang_spj_config},
+        "name": "C",
+        "description": "GCC 9.4",
+        "content_type": "text/x-csrc",
+    },
+    {
+        "config": _cpp_lang_config,
+        "spj": {"compile": _cpp_lang_spj_compile, "config": _cpp_lang_spj_config},
+        "name": "C++",
+        "description": "G++ 9.4",
+        "content_type": "text/x-c++src",
+    },
+    {
+        "config": _java_lang_config,
+        "name": "Java",
+        "description": "OpenJDK 11",
+        "content_type": "text/x-java",
+    },
+    {
+        "config": _py2_lang_config,
+        "name": "Python2",
+        "description": "Python 2.7",
+        "content_type": "text/x-python",
+    },
+    {
+        "config": _py3_lang_config,
+        "name": "Python3",
+        "description": "Python 3.6",
+        "content_type": "text/x-python",
+    },
+    {
+        "config": _go_lang_config,
+        "name": "Golang",
+        "description": "Golang 1.17",
+        "content_type": "text/x-go",
+    },
+    {
+        "config": _node_lang_config,
+        "name": "JavaScript",
+        "description": "Node 14",
+        "content_type": "text/javascript",
+    },
 ]
+
+spj_languages = list(filter(lambda item: "spj" in item, languages))
+language_names = [item["name"] for item in languages]
+spj_language_names = [item["name"] for item in spj_languages]
