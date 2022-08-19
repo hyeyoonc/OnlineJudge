@@ -7,7 +7,7 @@ class CreateCompileRunSerializer(serializers.Serializer):
     code = serializers.CharField(max_length=1024 * 1024)
     input_data = serializers.CharField(max_length=1024 * 1024, allow_blank=True)
     language = serializers.ChoiceField(choices=language_names)
-    email = serializers.CharField(max_length=100)
+    problem_id = serializers.IntegerField()
 
 
 class CompileRunModelSerializer(serializers.ModelSerializer):

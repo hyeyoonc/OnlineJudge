@@ -8,6 +8,7 @@ from options.options import SysOptions
 from compilerun.models import CompileRun
 from compilerun.tasks import compile_run_task
 from compilerun.serializers import CreateCompileRunSerializer, CompileRunModelSerializer
+from problem.models import Problem
 from utils.api import APIView, validate_serializer
 from utils.throttling import TokenBucket
 from utils.cache import cache
@@ -21,11 +22,17 @@ class CompileAPI(APIView):
     @login_required
     def post(self, request):
         data = request.data
-
+        print("=============data")
+        print(data)
         try:
             input_data = data["input_data"]
         except:
             input_data = None
+        problem_id = data.get("problem_id")
+        try:
+            problem = Problem.objects.get(id=problem_id)
+        except Problem.DoesNotExist:
+            return self.error("Problem does not exist")
 
         if len(data["code"]) == 0:
             message = "code: This field may not be blank."
@@ -35,11 +42,10 @@ class CompileAPI(APIView):
             user=request.user,
             language=data["language"],
             code=data["code"],
-            input_data=input_data,
+            input=input_data,
+            problem=problem,
         )
-        compile_run_task.delay(
-            compile_run.id, alms_back_current_url=data["alms_back_current_url"]
-        )
+        compile_run_task.delay(compile_run.id, problem_id)
         return self.success({"compile_run_id": compile_run.id})
 
     @login_required

@@ -11,6 +11,7 @@ from django.db.models import F
 from django.conf import settings
 from conf.models import JudgeServer
 from judge.languages import languages
+from problem.models import Problem
 from submission.models import JudgeStatus
 from options.options import SysOptions
 from compilerun.models import CompileRunStatus, CompileRun
@@ -70,19 +71,10 @@ class DispatcherBase(object):
 
 
 class CompileRunDispatcher(DispatcherBase):
-    def __init__(self, compile_run_id, alms_back_current_url=None):
+    def __init__(self, compile_run_id, problem_id):
         super().__init__()
         self.compile_run = CompileRun.objects.get(id=compile_run_id)
-        self.alms_back_current_url = alms_back_current_url
-
-    def _compute_statistic_info(self, resp_data):
-        # 用时和内存占用保存为多个测试点中最长的那个
-        self.compile_run.statistic_info["time_cost"] = max(
-            [x["cpu_time"] for x in resp_data]
-        )
-        self.compile_run.statistic_info["memory_cost"] = max(
-            [x["memory"] for x in resp_data]
-        )
+        self.problem = Problem.objects.get(id=problem_id)
 
     def do_compile_run(self):
         server = self.choose_compile_run_server()
@@ -96,13 +88,13 @@ class CompileRunDispatcher(DispatcherBase):
             filter(lambda item: language == item["name"], languages)
         )[0]
         code = self.compile_run.code
-        input_data = self.compile_run.input_data
+        input_data = self.compile_run.input
 
         data = {
             "language_config": compile_run_config["config"],
             "code": code,
-            "max_cpu_time": 1000 * 5,  # 3 seconds
-            "max_memory": 1024 * 1024 * 256,  # 10MB? -> 128 (?)
+            "max_cpu_time": self.problem.time_limit,  # 3 seconds 1000 * 5
+            "max_memory": 1024 * 1024 * self.problem.memory_limit,  # 10MB? -> 128 (?)
             "compile_run_id": self.compile_run.id,
             "output": False,
             "input_data": input_data,
@@ -110,70 +102,27 @@ class CompileRunDispatcher(DispatcherBase):
 
         self.compile_run.result = CompileRunStatus.JUDGING
         resp = self._request(urljoin(server.service_url, "/compile_run"), data=data)
-
-        patch_data = {
-            "output": "",
-            "result": "",
-            "error": "OK",
-            "memory": 0,
-            "cpu_time": 0,
-            "real_time": 0,
-            "error_message": "",
-        }
+        print("💛💛💛💛💛💛")
+        print(resp)
         # 에러가 발생할 경우
-
         if resp["err"]:
             self.compile_run.result = CompileRunStatus.COMPILE_ERROR
-            patch_data["error"] = "Compile Error"
-            patch_data["result"] = CompileRunStatus.COMPILE_ERROR
-            patch_data["error_message"] = resp["data"]
+            self.compile_run.error = CompileRunStatus.COMPILE_ERROR
+            self.compile_run.error_message = resp["data"]
         else:
-            self.compile_run.info = resp
-            # COMPILE_ERROR = -2
-            # WRONG_ANSWER = -1
-            # ACCEPTED = 0
-            # CPU_TIME_LIMIT_EXCEEDED = 1
-            # REAL_TIME_LIMIT_EXCEEDED = 2
-            # MEMORY_LIMIT_EXCEEDED = 3
-            # RUNTIME_ERROR = 4
-            # SYSTEM_ERROR = 5
-            # PENDING = 6
-            # JUDGING = 7
-            # PARTIALLY_ACCEPTED = 8
-            execution_result = self.compile_run.info["data"][0]
+            execution_result = resp["data"][0]
             self.compile_run.result = execution_result["result"]
-            patch_data["output"] = execution_result["output"]
-            patch_data["result"] = execution_result["result"]
-            patch_data["error"] = execution_result["error"]
-            patch_data["memory"] = execution_result["memory"]
-            patch_data["cpu_time"] = execution_result["cpu_time"]
-            patch_data["real_time"] = execution_result["real_time"]
-
+            self.compile_run.output = execution_result["output"]
+            self.compile_run.result = execution_result["result"]
+            self.compile_run.error = execution_result["error"]
+            self.compile_run.cpu_time = execution_result["cpu_time"]
+            self.compile_run.memory = execution_result["memory"]
+            self.compile_run.real_time = execution_result["real_time"]
+        print(self.compile_run.output)
+        print(type(self.compile_run.output))
+        print(len(self.compile_run.output))
         self.compile_run.save()
-
-        compile_run = CompileRun.objects.get(id=self.compile_run.id)
-        # ALMS_BASE_URL = settings.ALMS_BACK_BASE_URL
-        ALMS_BASE_URL = self.alms_back_current_url
-        alms_compile_run_url = ALMS_BASE_URL + "qjudge/compile_run/"
-
-        headers = {
-            "content-type": "application/json",
-        }
-        qj_compile_run_id = self.compile_run.id
-
-        # alms compile_run update API call
-        for i in range(3):
-            response = requests.patch(
-                alms_compile_run_url + qj_compile_run_id + "/",
-                data=json.dumps(patch_data),
-                headers=headers,
-                verify=False,
-            )
-            if response.status_code < 400:
-                break
-            sleep(1)
-
         self.release_judge_server(server.id)
 
-        # 至此判题结束，尝试处理任务队列中剩余的任务
+        # 큐에 남아있는 task 처리
         process_pending_task()

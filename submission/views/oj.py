@@ -91,10 +91,13 @@ class SubmissionAPI(APIView):
             problem_id=problem.id,
             ip=request.session["ip"],
             contest_id=data.get("contest_id"),
+            is_judging=True,
         )
         # use this for debug
         # JudgeDispatcher(submission.id, problem.id).judge()
         judge_task.delay(submission.id, problem.id)
+
+        # return => submission info
         if hide_id:
             return self.success()
         else:

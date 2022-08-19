@@ -121,12 +121,8 @@ class JudgeDispatcher(DispatcherBase):
 
     def _compute_statistic_info(self, resp_data):
         # 用时和内存占用保存为多个测试点中最长的那个
-        self.submission.statistic_info["time_cost"] = max(
-            [x["cpu_time"] for x in resp_data]
-        )
-        self.submission.statistic_info["memory_cost"] = max(
-            [x["memory"] for x in resp_data]
-        )
+        self.submission.time_cost = max([x["cpu_time"] for x in resp_data])
+        self.submission.memory = max([x["memory"] for x in resp_data])
 
         # sum up the score in OI mode
         if self.problem.rule_type == ProblemRuleType.OI:
@@ -144,9 +140,9 @@ class JudgeDispatcher(DispatcherBase):
                 logger.error(
                     f"Index Error raised when summing up the score in problem {self.problem.id}"
                 )
-                self.submission.statistic_info["score"] = 0
+                self.submission.score = 0
                 return
-            self.submission.statistic_info["score"] = score
+            self.submission.score = score
 
     def judge(self):
         language = self.submission.language
@@ -197,8 +193,8 @@ class JudgeDispatcher(DispatcherBase):
             resp = self._request(urljoin(server.service_url, "/judge"), data=data)
 
         print("🔥🔥🔥resp🔥🔥")
-
         print(resp)
+
         if not resp:
             Submission.objects.filter(id=self.submission.id).update(
                 result=JudgeStatus.SYSTEM_ERROR
@@ -207,8 +203,8 @@ class JudgeDispatcher(DispatcherBase):
 
         if resp["err"]:
             self.submission.result = JudgeStatus.COMPILE_ERROR
-            self.submission.statistic_info["err_info"] = resp["data"]
-            self.submission.statistic_info["score"] = 0
+            self.submission.err_info = resp["data"]
+            self.submission.score = 0
         else:
             resp["data"].sort(key=lambda x: int(x["test_case"]))
             self.submission.info = resp
@@ -216,8 +212,6 @@ class JudgeDispatcher(DispatcherBase):
             error_test_case = list(
                 filter(lambda case: case["result"] != 0, resp["data"])
             )
-            # ACM模式下,多个测试点全部正确则AC，否则取第一个错误的测试点的状态
-            # OI模式下, 若多个测试点全部正确则AC， 若全部错误则取第一个错误测试点状态，否则为部分正确
             if not error_test_case:
                 self.submission.result = JudgeStatus.ACCEPTED
             elif self.problem.rule_type == ProblemRuleType.ACM or len(
@@ -226,30 +220,31 @@ class JudgeDispatcher(DispatcherBase):
                 self.submission.result = error_test_case[0]["result"]
             else:
                 self.submission.result = JudgeStatus.PARTIALLY_ACCEPTED
+        self.submission.is_judging = False
         self.submission.save()
 
-        if self.contest_id:
-            if (
-                self.contest.status != ContestStatus.CONTEST_UNDERWAY
-                or User.objects.get(id=self.submission.user_id).is_contest_admin(
-                    self.contest
-                )
-            ):
-                logger.info(
-                    "Contest debug mode, id: "
-                    + str(self.contest_id)
-                    + ", submission id: "
-                    + self.submission.id
-                )
-                return
-            with transaction.atomic():
-                self.update_contest_problem_status()
-                self.update_contest_rank()
-        else:
-            if self.last_result:
-                self.update_problem_status_rejudge()
-            else:
-                self.update_problem_status()
+        # if self.contest_id:
+        #     if (
+        #         self.contest.status != ContestStatus.CONTEST_UNDERWAY
+        #         or User.objects.get(id=self.submission.user_id).is_contest_admin(
+        #             self.contest
+        #         )
+        #     ):
+        #         logger.info(
+        #             "Contest debug mode, id: "
+        #             + str(self.contest_id)
+        #             + ", submission id: "
+        #             + self.submission.id
+        #         )
+        #         return
+        #     with transaction.atomic():
+        #         self.update_contest_problem_status()
+        #         self.update_contest_rank()
+        # else:
+        #     if self.last_result:
+        #         self.update_problem_status_rejudge()
+        #     else:
+        #         self.update_problem_status()
 
         # 至此判题结束，尝试处理任务队列中剩余的任务
         process_pending_task()
