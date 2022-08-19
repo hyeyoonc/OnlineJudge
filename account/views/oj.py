@@ -234,7 +234,6 @@ class UserRegisterAPI(APIView):
             return self.error("Register function has been disabled by admin")
 
         data = request.data
-        print(data)
         data["username"] = data["username"].lower()
         data["email"] = data["email"].lower()
         # captcha = Captcha(request)

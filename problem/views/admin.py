@@ -165,7 +165,6 @@ class TestCaseAPI(CSRFExemptAPIView, TestCaseZipProcessor):
         if form.is_valid():
             spj = form.cleaned_data["spj"] == "true"
             file = form.cleaned_data["file"]
-            print("spj", spj, "file", file)
         else:
             return self.error("Upload failed")
         zip_file = f"/tmp/{rand_str()}.zip"

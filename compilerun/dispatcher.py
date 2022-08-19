@@ -102,8 +102,6 @@ class CompileRunDispatcher(DispatcherBase):
 
         self.compile_run.result = CompileRunStatus.JUDGING
         resp = self._request(urljoin(server.service_url, "/compile_run"), data=data)
-        print("💛💛💛💛💛💛")
-        print(resp)
         # 에러가 발생할 경우
         if resp["err"]:
             self.compile_run.result = CompileRunStatus.COMPILE_ERROR
@@ -118,9 +116,6 @@ class CompileRunDispatcher(DispatcherBase):
             self.compile_run.cpu_time = execution_result["cpu_time"]
             self.compile_run.memory = execution_result["memory"]
             self.compile_run.real_time = execution_result["real_time"]
-        print(self.compile_run.output)
-        print(type(self.compile_run.output))
-        print(len(self.compile_run.output))
         self.compile_run.save()
         self.release_judge_server(server.id)
 

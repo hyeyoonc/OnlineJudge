@@ -22,8 +22,6 @@ class CompileAPI(APIView):
     @login_required
     def post(self, request):
         data = request.data
-        print("=============data")
-        print(data)
         try:
             input_data = data["input_data"]
         except:

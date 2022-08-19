@@ -66,8 +66,6 @@ class DispatcherBase(object):
         ).hexdigest()
 
     def _request(self, url, data=None):
-        print("=============")
-        print(url)
         kwargs = {"headers": {"X-Judge-Server-Token": self.token}}
         if data:
             kwargs["json"] = data
@@ -131,8 +129,6 @@ class JudgeDispatcher(DispatcherBase):
                 for i in range(len(resp_data)):
                     if resp_data[i]["result"] == JudgeStatus.ACCEPTED:
                         resp_data[i]["score"] = self.problem.test_case_score[i]["score"]
-                        print("========score")
-                        print(resp_data[i]["score"])
                         score += resp_data[i]["score"]
                     else:
                         resp_data[i]["score"] = 0
@@ -176,8 +172,6 @@ class JudgeDispatcher(DispatcherBase):
             "spj_src": self.problem.spj_code,
             "io_mode": self.problem.io_mode,
         }
-        print("💛data💛data💛💛data💛data💛")
-        print(data)
 
         with ChooseJudgeServer() as server:
             if not server:
@@ -191,10 +185,6 @@ class JudgeDispatcher(DispatcherBase):
                 result=JudgeStatus.JUDGING
             )
             resp = self._request(urljoin(server.service_url, "/judge"), data=data)
-
-        print("🔥🔥🔥resp🔥🔥")
-        print(resp)
-
         if not resp:
             Submission.objects.filter(id=self.submission.id).update(
                 result=JudgeStatus.SYSTEM_ERROR
